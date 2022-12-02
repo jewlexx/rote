@@ -45,10 +45,10 @@ impl eframe::App for EditorApp {
             });
         });
 
-        let window_size = frame.info().window_info.size;
-
-        egui::Area::new("main_editor").show(ctx, |ui| {
-            ui.text_edit_multiline(contents);
+        egui::CentralPanel::default().show(ctx, |ui| {
+            ui.set_min_height(100.0);
+            ui.set_max_height(100.0);
+            ui.add_sized(ui.available_size(), egui::TextEdit::multiline(contents));
         });
     }
 }
