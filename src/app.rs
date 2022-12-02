@@ -3,11 +3,11 @@ use std::{path::PathBuf, time::Duration};
 #[derive(Debug, Default, serde::Deserialize, serde::Serialize)]
 #[serde(default)]
 pub struct EditorApp {
-    file_path: Option<PathBuf>,
+    path: Option<PathBuf>,
 
     // Do not include entire file contents in state saving
     #[serde(skip)]
-    file_contents: String,
+    contents: String,
 }
 
 impl EditorApp {
@@ -31,6 +31,19 @@ impl eframe::App for EditorApp {
     }
 
     fn update(&mut self, ctx: &egui::Context, frame: &mut eframe::Frame) {
+        let Self { path, contents } = self;
+
+        egui::TopBottomPanel::top("top_panel").show(ctx, |ui| {
+            // The top panel is often a good place for a menu bar:
+            egui::menu::bar(ui, |ui| {
+                ui.menu_button("File", |ui| {
+                    if ui.button("Quit").clicked() {
+                        frame.close();
+                    }
+                });
+            });
+        });
+
         todo!()
     }
 }
