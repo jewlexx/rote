@@ -31,6 +31,7 @@ impl eframe::App for EditorApp {
     }
 
     fn update(&mut self, ctx: &egui::Context, frame: &mut eframe::Frame) {
+        debug!("Updating...");
         let Self { path, contents } = self;
 
         egui::TopBottomPanel::top("top_panel").show(ctx, |ui| {
@@ -44,6 +45,10 @@ impl eframe::App for EditorApp {
             });
         });
 
-        todo!()
+        let window_size = frame.info().window_info.size;
+
+        egui::Area::new("main_editor").show(ctx, |ui| {
+            ui.text_edit_multiline(contents);
+        });
     }
 }

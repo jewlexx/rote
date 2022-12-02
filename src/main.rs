@@ -17,4 +17,10 @@ fn main() {
         .init();
 
     let native_options = eframe::NativeOptions::default();
+
+    eframe::run_native(
+        "Potenad",
+        native_options,
+        Box::new(|ctx| Box::new(app::EditorApp::new(ctx))),
+    );
 }
