@@ -6,6 +6,8 @@ use tracing::Level;
 #[macro_use]
 extern crate tracing;
 
+mod app;
+
 fn main() {
     use tracing_subscriber::fmt::format::FmtSpan;
 

@@ -1172,7 +1172,9 @@ version = "0.1.0"
 dependencies = [
  "eframe",
  "egui",
+ "serde",
  "tokio",
+ "toml",
  "tracing",
  "tracing-subscriber",
 ]
@@ -1280,6 +1282,9 @@ name = "serde"
 version = "1.0.148"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "e53f64bb4ba0191d6d0676e1b141ca55047d83b74f5607e6d8eb88126c52c2dc"
+dependencies = [
+ "serde_derive",
+]
 
 [[package]]
 name = "serde_derive"
