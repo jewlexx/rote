@@ -1,9 +1,10 @@
 use std::{
     path::{Path, PathBuf},
+    sync::mpsc::{Receiver, Sender},
     time::Duration,
 };
 
-#[derive(Debug, Default, serde::Deserialize, serde::Serialize)]
+#[derive(Debug, serde::Deserialize, serde::Serialize)]
 #[serde(default)]
 pub struct EditorApp {
     path: Option<PathBuf>,
@@ -11,6 +12,19 @@ pub struct EditorApp {
     // Do not include entire file contents in state saving
     #[serde(skip)]
     contents: String,
+
+    #[serde(skip)]
+    channel: (Sender<PathBuf>, Receiver<PathBuf>),
+}
+
+impl Default for EditorApp {
+    fn default() -> Self {
+        Self {
+            path: Default::default(),
+            contents: Default::default(),
+            channel: std::sync::mpsc::channel(),
+        }
+    }
 }
 
 impl EditorApp {
@@ -48,7 +62,6 @@ impl eframe::App for EditorApp {
 
     fn update(&mut self, ctx: &egui::Context, frame: &mut eframe::Frame) {
         debug!("Updating...");
-        let Self { contents, .. } = self;
 
         egui::TopBottomPanel::top("top_panel").show(ctx, |ui| {
             // The top panel is often a good place for a menu bar:
@@ -56,7 +69,11 @@ impl eframe::App for EditorApp {
                 ui.menu_button("File", |ui| {
                     if ui.button("Open").clicked() {
                         // TODO: Save final directory
-                        rfd::FileDialog::new();
+                        let file = rfd::FileDialog::new().pick_file();
+
+                        if let Some(path) = file {
+                            self.open_file(path).unwrap();
+                        }
                     }
 
                     if ui.button("Quit").clicked() {
@@ -69,7 +86,10 @@ impl eframe::App for EditorApp {
         egui::CentralPanel::default().show(ctx, |ui| {
             ui.set_min_height(100.0);
             ui.set_max_height(100.0);
-            ui.add_sized(ui.available_size(), egui::TextEdit::multiline(contents));
+            ui.add_sized(
+                ui.available_size(),
+                egui::TextEdit::multiline(&mut self.contents),
+            );
         });
     }
 }
