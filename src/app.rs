@@ -22,10 +22,15 @@ impl EditorApp {
         }
     }
 
-    pub fn open_file(&mut self, path: &impl ToOwned<Owned = PathBuf>) -> std::io::Result<()> {
+    pub fn open_file(&mut self, path: impl AsRef<Path>) -> std::io::Result<()> {
         use std::{fs::File, io::Read};
 
-        self.path = Some(path.to_owned());
+        let path = path.as_ref();
+        let mut file = File::open(path)?;
+
+        file.read_to_string(&mut self.contents)?;
+
+        self.path = Some(path.to_path_buf());
 
         Ok(())
     }
