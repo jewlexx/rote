@@ -1,4 +1,7 @@
-use std::{path::PathBuf, time::Duration};
+use std::{
+    path::{Path, PathBuf},
+    time::Duration,
+};
 
 #[derive(Debug, Default, serde::Deserialize, serde::Serialize)]
 #[serde(default)]
@@ -17,6 +20,14 @@ impl EditorApp {
         } else {
             Self::default()
         }
+    }
+
+    pub fn open_file(&mut self, path: &impl ToOwned<Owned = PathBuf>) -> std::io::Result<()> {
+        use std::{fs::File, io::Read};
+
+        self.path = Some(path.to_owned());
+
+        Ok(())
     }
 }
 
