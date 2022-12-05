@@ -48,7 +48,7 @@ impl eframe::App for EditorApp {
 
     fn update(&mut self, ctx: &egui::Context, frame: &mut eframe::Frame) {
         debug!("Updating...");
-        let Self { path, contents } = self;
+        let Self { contents, .. } = self;
 
         egui::TopBottomPanel::top("top_panel").show(ctx, |ui| {
             // The top panel is often a good place for a menu bar:
