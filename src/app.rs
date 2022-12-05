@@ -54,7 +54,10 @@ impl eframe::App for EditorApp {
             // The top panel is often a good place for a menu bar:
             egui::menu::bar(ui, |ui| {
                 ui.menu_button("File", |ui| {
-                    if ui.button("Open").clicked() {}
+                    if ui.button("Open").clicked() {
+                        // TODO: Save final directory
+                        rfd::FileDialog::new();
+                    }
 
                     if ui.button("Quit").clicked() {
                         frame.close();
