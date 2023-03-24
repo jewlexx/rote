@@ -187,15 +187,19 @@ impl eframe::App for Editor {
                 .collapsible(false)
                 .resizable(false)
                 .show(ctx, |ui| {
-                    ui.horizontal(|ui| {
-                        if ui.button("Do Not Save").clicked() {
-                            self.trying_to_close = false;
-                        }
+                    ui.vertical(|ui| {
+                        ui.label("You will lose all changes.");
 
-                        if ui.button("Save").clicked() {
-                            self.execute(Shortcut::Save, ctx, frame);
-                            frame.close();
-                        }
+                        ui.horizontal(|ui| {
+                            if ui.button("Don't Save").clicked() {
+                                self.trying_to_close = false;
+                            }
+
+                            if ui.button("Save").clicked() {
+                                self.execute(Shortcut::Save, ctx, frame);
+                                frame.close();
+                            }
+                        });
                     });
                 });
         }
