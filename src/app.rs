@@ -6,7 +6,7 @@ use std::{
     time::Duration,
 };
 
-use egui::Widget;
+use egui::{Align2, Vec2, Widget};
 use serde::{Deserialize, Serialize};
 use strum::IntoEnumIterator;
 
@@ -186,19 +186,17 @@ impl eframe::App for Editor {
             egui::Window::new("Do you want to quit?")
                 .collapsible(false)
                 .resizable(false)
+                .anchor(Align2::CENTER_BOTTOM, Vec2::ZERO)
                 .show(ctx, |ui| {
                     ui.vertical(|ui| {
                         ui.label("You will lose all changes.");
 
                         ui.horizontal(|ui| {
-                            if ui.button("Don't Save").clicked() {
-                                self.trying_to_close = false;
-                            }
-
                             if ui.button("Save").clicked() {
                                 self.execute(Shortcut::Save, ctx, frame);
-                                frame.close();
                             }
+
+                            frame.close();
                         });
                     });
                 });
