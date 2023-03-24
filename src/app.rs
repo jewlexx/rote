@@ -81,6 +81,15 @@ impl Editor {
                     self.open_file(path).unwrap();
                 }
             }
+            Shortcut::Save => {
+                use std::{fs::File, io::Write};
+
+                if let Some(path) = self.path.as_ref() {
+                    let mut file = File::create(path).unwrap();
+                    file.write_all(self.contents.get_contents().as_bytes())
+                        .unwrap();
+                }
+            }
             Shortcut::Close => self.reset(),
             Shortcut::Quit => frame.close(),
         }

@@ -19,6 +19,10 @@ impl Default for ContentsBuffer {
 }
 
 impl ContentsBuffer {
+    pub fn get_contents(&self) -> &String {
+        &self.contents
+    }
+
     pub fn get_contents_mut(&mut self) -> &mut String {
         &mut self.contents
     }
