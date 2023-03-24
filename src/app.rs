@@ -6,9 +6,11 @@ use std::{
     time::Duration,
 };
 
+use egui::Widget;
 use serde::{Deserialize, Serialize};
+use strum::IntoEnumIterator;
 
-use crate::buffer::ContentsBuffer;
+use crate::{buffer::ContentsBuffer, shortcuts::Shortcut};
 
 #[derive(Debug, Deserialize, Serialize)]
 #[serde(default)]
@@ -68,6 +70,21 @@ impl Editor {
 
         Ok(())
     }
+
+    pub fn execute(&mut self, shortcut: Shortcut, ctx: &egui::Context, frame: &mut eframe::Frame) {
+        match shortcut {
+            Shortcut::Open => {
+                // TODO: Save final directory
+                let file = rfd::FileDialog::new().pick_file();
+
+                if let Some(path) = file {
+                    self.open_file(path).unwrap();
+                }
+            }
+            Shortcut::Close => self.reset(),
+            Shortcut::Quit => frame.close(),
+        }
+    }
 }
 
 impl eframe::App for Editor {
@@ -81,38 +98,31 @@ impl eframe::App for Editor {
     }
 
     fn update(&mut self, ctx: &egui::Context, frame: &mut eframe::Frame) {
-        if let Some(path) = self.path.as_ref() {
+        let name = if let Some(path) = self.path.as_ref() {
             let stripped_path = path.with_extension("");
             let name = stripped_path
                 .file_name()
                 .unwrap_or_default()
-                .to_string_lossy();
+                .to_string_lossy()
+                .to_string();
 
-            let formatted_name =
-                format!("{}{}", name, if self.contents.edited() { "*" } else { "" });
+            name
+        } else {
+            "Potenad".to_string()
+        };
 
-            frame.set_window_title(&formatted_name);
-        }
+        let formatted_name = format!("{}{}", name, if self.contents.edited() { "*" } else { "" });
+
+        frame.set_window_title(&formatted_name);
 
         egui::TopBottomPanel::top("top_panel").show(ctx, |ui| {
             // The top panel is often a good place for a menu bar:
             egui::menu::bar(ui, |ui| {
                 ui.menu_button("File", |ui| {
-                    if ui.button("Open").clicked() {
-                        // TODO: Save final directory
-                        let file = rfd::FileDialog::new().pick_file();
-
-                        if let Some(path) = file {
-                            self.open_file(path).unwrap();
+                    for shortcut in Shortcut::iter() {
+                        if shortcut.into_button(ctx).ui(ui).clicked() {
+                            self.execute(shortcut, ctx, frame);
                         }
-                    }
-
-                    if ui.button("Quit").clicked() {
-                        frame.close();
-                    }
-
-                    if ui.button("Close").clicked() {
-                        self.reset();
                     }
                 });
             });
@@ -125,6 +135,14 @@ impl eframe::App for Editor {
                 ui.available_size(),
                 egui::TextEdit::multiline(&mut self.contents),
             );
+        });
+
+        ctx.input_mut(|state| {
+            for shortcut in Shortcut::iter() {
+                if state.consume_shortcut(&shortcut.get_details().1) {
+                    self.execute(shortcut, ctx, frame);
+                }
+            }
         });
     }
 }
