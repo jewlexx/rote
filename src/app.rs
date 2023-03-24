@@ -15,14 +15,18 @@ pub struct EditorApp {
 
     #[serde(skip)]
     channel: (Sender<PathBuf>, Receiver<PathBuf>),
+
+    #[serde(skip)]
+    edited: bool,
 }
 
 impl Default for EditorApp {
     fn default() -> Self {
         Self {
-            path: Default::default(),
-            contents: Default::default(),
+            path: None,
+            contents: String::new(),
             channel: std::sync::mpsc::channel(),
+            edited: false,
         }
     }
 }
