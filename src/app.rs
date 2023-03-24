@@ -1,33 +1,39 @@
+#![warn(clippy::pedantic)]
+
 use std::{
     path::{Path, PathBuf},
     sync::mpsc::{Receiver, Sender},
     time::Duration,
 };
 
-#[derive(Debug, serde::Deserialize, serde::Serialize)]
+use serde::{Deserialize, Serialize};
+
+use crate::buffer::ContentsBuffer;
+
+#[derive(Debug, Deserialize, Serialize)]
 #[serde(default)]
-pub struct EditorApp {
+pub struct Editor {
     path: Option<PathBuf>,
 
     // Do not include entire file contents in state saving
     #[serde(skip)]
-    contents: String,
+    contents: ContentsBuffer,
 
     #[serde(skip)]
     channel: (Sender<PathBuf>, Receiver<PathBuf>),
 }
 
-impl Default for EditorApp {
+impl Default for Editor {
     fn default() -> Self {
         Self {
             path: None,
-            contents: String::new(),
+            contents: ContentsBuffer::default(),
             channel: std::sync::mpsc::channel(),
         }
     }
 }
 
-impl EditorApp {
+impl Editor {
     pub fn new(ctx: &eframe::CreationContext<'_>) -> Self {
         if let Some(storage) = ctx.storage {
             eframe::get_value(storage, eframe::APP_KEY).unwrap_or_default()
@@ -42,7 +48,8 @@ impl EditorApp {
         let path = path.as_ref();
         let mut file = File::open(path)?;
 
-        file.read_to_string(&mut self.contents)?;
+        file.read_to_string(self.contents.get_contents_mut())
+            .expect("read to contents buffer");
 
         self.path = Some(path.to_path_buf());
 
@@ -50,9 +57,9 @@ impl EditorApp {
     }
 }
 
-impl eframe::App for EditorApp {
+impl eframe::App for Editor {
     fn save(&mut self, storage: &mut dyn eframe::Storage) {
-        eframe::set_value(storage, eframe::APP_KEY, self)
+        eframe::set_value(storage, eframe::APP_KEY, self);
     }
 
     // TODO: Add config to be able to change this and other options
