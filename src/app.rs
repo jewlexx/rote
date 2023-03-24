@@ -17,6 +17,9 @@ use crate::{buffer::ContentsBuffer, shortcuts::Shortcut};
 pub struct Editor {
     path: Option<PathBuf>,
 
+    #[serde(skip)]
+    trying_to_close: bool,
+
     // Do not include entire file contents in state saving
     #[serde(skip)]
     contents: ContentsBuffer,
@@ -29,6 +32,7 @@ impl Default for Editor {
     fn default() -> Self {
         Self {
             path: None,
+            trying_to_close: false,
             contents: ContentsBuffer::default(),
             channel: std::sync::mpsc::channel(),
         }
@@ -115,6 +119,11 @@ impl Editor {
 }
 
 impl eframe::App for Editor {
+    fn on_close_event(&mut self) -> bool {
+        self.trying_to_close = true;
+        !self.contents.edited()
+    }
+
     fn save(&mut self, storage: &mut dyn eframe::Storage) {
         eframe::set_value(storage, eframe::APP_KEY, self);
     }
@@ -171,5 +180,24 @@ impl eframe::App for Editor {
                 }
             }
         });
+
+        if self.trying_to_close {
+            // Show confirmation dialog:
+            egui::Window::new("Do you want to quit?")
+                .collapsible(false)
+                .resizable(false)
+                .show(ctx, |ui| {
+                    ui.horizontal(|ui| {
+                        if ui.button("Do Not Save").clicked() {
+                            self.trying_to_close = false;
+                        }
+
+                        if ui.button("Save").clicked() {
+                            self.execute(Shortcut::Save, ctx, frame);
+                            frame.close();
+                        }
+                    });
+                });
+        }
     }
 }
