@@ -71,7 +71,26 @@ impl Editor {
         Ok(())
     }
 
-    pub fn execute(&mut self, shortcut: Shortcut, ctx: &egui::Context, frame: &mut eframe::Frame) {
+    pub fn save_file(&mut self, path: &PathBuf) {
+        use std::{fs::File, io::Write};
+
+        let mut file = File::create(path).unwrap();
+        file.write_all(self.contents.get_contents().as_bytes())
+            .unwrap();
+
+        self.contents.set_edited(false);
+    }
+
+    pub fn save_as(&mut self) {
+        let file = rfd::FileDialog::new().pick_file();
+
+        if let Some(path) = file {
+            self.save_file(&path);
+            self.path = Some(path);
+        }
+    }
+
+    pub fn execute(&mut self, shortcut: Shortcut, _: &egui::Context, frame: &mut eframe::Frame) {
         match shortcut {
             Shortcut::Open => {
                 // TODO: Save final directory
@@ -82,14 +101,13 @@ impl Editor {
                 }
             }
             Shortcut::Save => {
-                use std::{fs::File, io::Write};
-
-                if let Some(path) = self.path.as_ref() {
-                    let mut file = File::create(path).unwrap();
-                    file.write_all(self.contents.get_contents().as_bytes())
-                        .unwrap();
+                if let Some(path) = self.path.clone() {
+                    self.save_file(&path);
+                } else {
+                    self.save_as();
                 }
             }
+            Shortcut::SaveAs => self.save_as(),
             Shortcut::Close => self.reset(),
             Shortcut::Quit => frame.close(),
         }

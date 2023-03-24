@@ -5,6 +5,7 @@ use strum::EnumIter;
 pub enum Shortcut {
     Open,
     Save,
+    SaveAs,
     Close,
     Quit,
 }
@@ -14,6 +15,10 @@ impl Shortcut {
         match self {
             Shortcut::Open => ("Open", KeyboardShortcut::new(Modifiers::CTRL, Key::O)),
             Shortcut::Save => ("Save", KeyboardShortcut::new(Modifiers::CTRL, Key::S)),
+            Shortcut::SaveAs => (
+                "Save As",
+                KeyboardShortcut::new(Modifiers::CTRL | Modifiers::SHIFT, Key::S),
+            ),
             Shortcut::Close => ("Close", KeyboardShortcut::new(Modifiers::CTRL, Key::W)),
             Shortcut::Quit => ("Quit", KeyboardShortcut::new(Modifiers::CTRL, Key::Q)),
         }
