@@ -15,9 +15,6 @@ pub struct EditorApp {
 
     #[serde(skip)]
     channel: (Sender<PathBuf>, Receiver<PathBuf>),
-
-    #[serde(skip)]
-    edited: bool,
 }
 
 impl Default for EditorApp {
@@ -26,7 +23,6 @@ impl Default for EditorApp {
             path: None,
             contents: String::new(),
             channel: std::sync::mpsc::channel(),
-            edited: false,
         }
     }
 }
