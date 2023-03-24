@@ -9,15 +9,8 @@ edition = "2021"
 eframe = { version = "0.21.3", features = ["dark-light", "persistence"] }
 egui = "0.21.0"
 rfd = "0.11.2"
-serde = { version = "1.0.148", features = ["derive"] }
+serde = { version = "1.0.158", features = ["derive"] }
 strum = { version = "0.24.1", features = ["derive"] }
-tokio = { version = "1.24.2", features = ["full"] }
 toml = "0.7.3"
 tracing = "0.1.37"
 tracing-subscriber = "0.3.16"
-
-# [target.'cfg(windows)'.dependencies]
-# native-dialog = { version  = "0.6.3", features = ["windows_dpi_awareness", "windows_visual_styles"] }
-
-# [target.'cfg(not(windows))'.dependencies]
-# native-dialog = "0.6.3"
