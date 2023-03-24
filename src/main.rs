@@ -3,9 +3,6 @@
 
 use tracing::Level;
 
-#[macro_use]
-extern crate tracing;
-
 mod app;
 mod buffer;
 mod shortcuts;
