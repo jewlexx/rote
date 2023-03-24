@@ -186,12 +186,16 @@ impl eframe::App for Editor {
             egui::Window::new("Do you want to quit?")
                 .collapsible(false)
                 .resizable(false)
-                .anchor(Align2::CENTER_BOTTOM, Vec2::ZERO)
+                .anchor(Align2::CENTER_CENTER, Vec2::ZERO)
                 .show(ctx, |ui| {
                     ui.vertical(|ui| {
                         ui.label("You will lose all changes.");
 
                         ui.horizontal(|ui| {
+                            if ui.button("Don't Save").clicked() {
+                                self.contents.set_edited(false);
+                            }
+
                             if ui.button("Save").clicked() {
                                 self.execute(Shortcut::Save, ctx, frame);
                             }
