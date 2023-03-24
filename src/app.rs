@@ -36,10 +36,23 @@ impl Default for Editor {
 impl Editor {
     pub fn new(ctx: &eframe::CreationContext<'_>) -> Self {
         if let Some(storage) = ctx.storage {
-            eframe::get_value(storage, eframe::APP_KEY).unwrap_or_default()
+            let mut data: Self = eframe::get_value(storage, eframe::APP_KEY).unwrap_or_default();
+
+            if let Some(path) = data.path.clone() {
+                if data.open_file(path).is_err() {
+                    data.path = None;
+                }
+            }
+
+            data
         } else {
             Self::default()
         }
+    }
+
+    pub fn reset(&mut self) {
+        self.contents = ContentsBuffer::default();
+        self.path = None;
     }
 
     pub fn open_file(&mut self, path: impl AsRef<Path>) -> std::io::Result<()> {
@@ -96,6 +109,10 @@ impl eframe::App for Editor {
 
                     if ui.button("Quit").clicked() {
                         frame.close();
+                    }
+
+                    if ui.button("Close").clicked() {
+                        self.reset();
                     }
                 });
             });

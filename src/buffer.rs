@@ -42,7 +42,7 @@ impl egui::TextBuffer for ContentsBuffer {
     }
 
     fn insert_text(&mut self, text: &str, char_index: usize) -> usize {
-        self.edited = true;
+        self.set_edited(true);
         self.contents.insert_text(text, char_index)
     }
 
