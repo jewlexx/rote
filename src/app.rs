@@ -68,7 +68,18 @@ impl eframe::App for Editor {
     }
 
     fn update(&mut self, ctx: &egui::Context, frame: &mut eframe::Frame) {
-        debug!("Updating...");
+        if let Some(path) = self.path.as_ref() {
+            let stripped_path = path.with_extension("");
+            let name = stripped_path
+                .file_name()
+                .unwrap_or_default()
+                .to_string_lossy();
+
+            let formatted_name =
+                format!("{}{}", name, if self.contents.edited() { "*" } else { "" });
+
+            frame.set_window_title(&formatted_name);
+        }
 
         egui::TopBottomPanel::top("top_panel").show(ctx, |ui| {
             // The top panel is often a good place for a menu bar:
