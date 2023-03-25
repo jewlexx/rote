@@ -137,7 +137,7 @@ impl Editor {
                                 ui.vertical(|ui| {
                                     ui.label(&format!(
                                         "{} currently only supports UTF-8 encoded files",
-                                        *crate::DEFAULT_NAME
+                                        *crate::APP_NAME
                                     ));
                                 });
                             });
