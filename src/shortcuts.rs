@@ -1,6 +1,8 @@
 use egui::{Button, Context, Key, KeyboardShortcut, Modifiers};
 use strum::EnumIter;
 
+// TODO: Add shortcuts without keyboard shortcuts
+
 pub trait Shortcut {
     fn get_details(&self) -> (&'static str, KeyboardShortcut);
 

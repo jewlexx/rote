@@ -216,6 +216,10 @@ impl eframe::App for Editor {
                             self.view_execute(shortcut, ctx, frame);
                         }
                     }
+
+                    if ui.button("Reset Zoom").clicked() {
+                        self.zoom = 1.0;
+                    }
                 });
             });
         });
