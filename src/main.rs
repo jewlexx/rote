@@ -6,6 +6,7 @@ use tracing::Level;
 
 mod app;
 mod buffer;
+mod diff;
 mod shortcuts;
 
 static DEFAULT_NAME: Lazy<String> = Lazy::new(|| {
@@ -14,6 +15,9 @@ static DEFAULT_NAME: Lazy<String> = Lazy::new(|| {
 
     hecked.to_string()
 });
+
+#[macro_use]
+extern crate tracing;
 
 fn main() {
     use tracing_subscriber::fmt::format::FmtSpan;

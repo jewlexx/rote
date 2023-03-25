@@ -6,8 +6,10 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
+difference = "2.0.0"
 eframe = { version = "0.21.3", features = ["dark-light", "persistence"] }
 egui = "0.21.0"
+parking_lot = "0.12.1"
 heck = "0.4.1"
 once_cell = { version = "1.17.1", features = ["parking_lot"] }
 rfd = "0.11.3"
