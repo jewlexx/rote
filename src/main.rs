@@ -8,6 +8,9 @@ mod buffer;
 mod diff;
 mod shortcuts;
 
+#[macro_use]
+extern crate tracing;
+
 fn main() {
     use tracing_subscriber::fmt::format::FmtSpan;
 

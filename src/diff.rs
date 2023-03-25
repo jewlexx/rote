@@ -29,6 +29,10 @@ impl DiffBuffer {
         }
     }
 
+    pub fn size(&self) -> usize {
+        self.diffs.lock().len()
+    }
+
     pub fn add(&self, text: String, position: usize) {
         self.add_change(Diff::Add(text, position))
     }
@@ -38,7 +42,11 @@ impl DiffBuffer {
     }
 
     pub fn add_change(&self, diff: Diff) {
-        dbg!(&diff);
+        debug!(
+            "Added {:#?}\nBuffer is now {} diffs long",
+            diff,
+            self.size()
+        );
         self.diffs.lock().push(diff);
     }
 }
