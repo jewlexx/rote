@@ -22,7 +22,7 @@ static APP_NAME: Lazy<String> = Lazy::new(|| {
 fn load_icon() -> Option<IconData> {
     match image::load_from_memory(include_bytes!("../resources/icons/PENCIL.png")) {
         Ok(image) => {
-            info!("Loading icon");
+            trace!("Loading icon");
             let rgba = image.into_rgba8();
             let (width, height) = rgba.dimensions();
             let bytes = rgba.into_raw();
