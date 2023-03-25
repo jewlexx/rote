@@ -3,10 +3,9 @@
 
 use tracing::Level;
 
-#[macro_use]
-extern crate tracing;
-
 mod app;
+mod buffer;
+mod shortcuts;
 
 fn main() {
     use tracing_subscriber::fmt::format::FmtSpan;
@@ -21,6 +20,7 @@ fn main() {
     eframe::run_native(
         "Potenad",
         native_options,
-        Box::new(|ctx| Box::new(app::EditorApp::new(ctx))),
-    );
+        Box::new(|ctx| Box::new(app::Editor::new(ctx))),
+    )
+    .unwrap();
 }
