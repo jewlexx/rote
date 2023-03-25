@@ -142,7 +142,7 @@ impl eframe::App for Editor {
                 .to_string_lossy()
                 .to_string()
         } else {
-            crate::DEFAULT_NAME.clone()
+            crate::APP_NAME.clone()
         };
 
         let formatted_name = format!("{}{}", name, if self.contents.edited() { "*" } else { "" });

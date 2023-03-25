@@ -8,7 +8,7 @@ mod app;
 mod buffer;
 mod shortcuts;
 
-static DEFAULT_NAME: Lazy<String> = Lazy::new(|| {
+static APP_NAME: Lazy<String> = Lazy::new(|| {
     let pkg_name = env!("CARGO_PKG_NAME");
     let hecked = heck::AsUpperCamelCase(pkg_name);
 
@@ -26,7 +26,7 @@ fn main() {
     let native_options = eframe::NativeOptions::default();
 
     eframe::run_native(
-        DEFAULT_NAME.as_str(),
+        APP_NAME.as_str(),
         native_options,
         Box::new(|ctx| Box::new(app::Editor::new(ctx))),
     )
