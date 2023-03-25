@@ -136,15 +136,13 @@ impl eframe::App for Editor {
     fn update(&mut self, ctx: &egui::Context, frame: &mut eframe::Frame) {
         let name = if let Some(path) = self.path.as_ref() {
             let stripped_path = path.with_extension("");
-            let name = stripped_path
+            stripped_path
                 .file_name()
                 .unwrap_or_default()
                 .to_string_lossy()
-                .to_string();
-
-            name
+                .to_string()
         } else {
-            "Potenad".to_string()
+            crate::DEFAULT_NAME.clone()
         };
 
         let formatted_name = format!("{}{}", name, if self.contents.edited() { "*" } else { "" });
@@ -165,12 +163,12 @@ impl eframe::App for Editor {
         });
 
         egui::CentralPanel::default().show(ctx, |ui| {
-            ui.set_min_height(100.0);
-            ui.set_max_height(100.0);
-            ui.add_sized(
-                ui.available_size(),
-                egui::TextEdit::multiline(&mut self.contents),
-            );
+            egui::ScrollArea::vertical().show(ui, |ui| {
+                let available = ui.available_size();
+                ui.set_min_height(available.y);
+                ui.set_max_height(available.y);
+                ui.add_sized(available, egui::TextEdit::multiline(&mut self.contents));
+            });
         });
 
         ctx.input_mut(|state| {
