@@ -56,3 +56,24 @@ impl Shortcut for EditShortcut {
         }
     }
 }
+
+#[derive(Debug, Copy, Clone, EnumIter)]
+pub enum ViewShortcut {
+    ZoomIn,
+    ZoomOut,
+}
+
+impl Shortcut for ViewShortcut {
+    fn get_details(&self) -> (&'static str, KeyboardShortcut) {
+        match self {
+            ViewShortcut::ZoomIn => (
+                "Zoom In",
+                KeyboardShortcut::new(Modifiers::CTRL, Key::PlusEquals),
+            ),
+            ViewShortcut::ZoomOut => (
+                "Zoom Out",
+                KeyboardShortcut::new(Modifiers::CTRL, Key::Minus),
+            ),
+        }
+    }
+}

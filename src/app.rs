@@ -6,19 +6,24 @@ use std::{
     time::Duration,
 };
 
-use egui::{Align2, Vec2, Widget};
+use egui::{Align2, FontSelection, Style, TextStyle, Vec2, Widget};
 use serde::{Deserialize, Serialize};
 use strum::IntoEnumIterator;
 
 use crate::{
     buffer::ContentsBuffer,
-    shortcuts::{EditShortcut, FileShortcut, Shortcut},
+    shortcuts::{EditShortcut, FileShortcut, Shortcut, ViewShortcut},
 };
 
 #[derive(Debug, Deserialize, Serialize)]
 #[serde(default)]
 pub struct Editor {
     path: Option<PathBuf>,
+
+    /// Zoom range as a percentage (*100)
+    ///
+    /// Thus 1.1 would be 110%
+    zoom: f32,
 
     #[serde(skip)]
     trying_to_close: bool,
@@ -35,6 +40,7 @@ impl Default for Editor {
     fn default() -> Self {
         Self {
             path: None,
+            zoom: 1.0,
             trying_to_close: false,
             contents: ContentsBuffer::default(),
             channel: std::sync::mpsc::channel(),
@@ -132,6 +138,18 @@ impl Editor {
         frame: &mut eframe::Frame,
     ) {
     }
+
+    pub fn view_execute(
+        &mut self,
+        shortcut: ViewShortcut,
+        _: &egui::Context,
+        frame: &mut eframe::Frame,
+    ) {
+        match shortcut {
+            ViewShortcut::ZoomIn => self.zoom += 0.1,
+            ViewShortcut::ZoomOut => self.zoom -= 0.1,
+        }
+    }
 }
 
 impl eframe::App for Editor {
@@ -150,6 +168,14 @@ impl eframe::App for Editor {
     }
 
     fn update(&mut self, ctx: &egui::Context, frame: &mut eframe::Frame) {
+        let font = {
+            let mut font_id = TextStyle::Body.resolve(&ctx.style());
+            let old_size = font_id.size;
+            font_id.size = old_size * self.zoom;
+
+            font_id
+        };
+
         let name = if let Some(path) = self.path.as_ref() {
             let stripped_path = path.with_extension("");
             stripped_path
@@ -182,7 +208,15 @@ impl eframe::App for Editor {
                             self.edit_execute(shortcut, ctx, frame);
                         }
                     }
-                })
+                });
+
+                ui.menu_button("View", |ui| {
+                    for shortcut in ViewShortcut::iter() {
+                        if shortcut.into_button(ctx).ui(ui).clicked() {
+                            self.view_execute(shortcut, ctx, frame);
+                        }
+                    }
+                });
             });
         });
 
@@ -191,7 +225,10 @@ impl eframe::App for Editor {
                 let available = ui.available_size();
                 ui.set_min_height(available.y);
                 ui.set_max_height(available.y);
-                ui.add_sized(available, egui::TextEdit::multiline(&mut self.contents));
+                ui.add_sized(
+                    available,
+                    egui::TextEdit::multiline(&mut self.contents).font(font),
+                );
             });
         });
 
@@ -205,6 +242,12 @@ impl eframe::App for Editor {
             for shortcut in EditShortcut::iter() {
                 if state.consume_shortcut(&shortcut.get_details().1) {
                     self.edit_execute(shortcut, ctx, frame);
+                }
+            }
+
+            for shortcut in ViewShortcut::iter() {
+                if state.consume_shortcut(&shortcut.get_details().1) {
+                    self.view_execute(shortcut, ctx, frame);
                 }
             }
         });
