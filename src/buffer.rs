@@ -1,7 +1,5 @@
 // TODO: Custom serialize with for contentsbuffer
 
-use egui::TextBuffer;
-
 #[derive(Debug, Clone)]
 pub struct ContentsBuffer {
     pub contents: String,
