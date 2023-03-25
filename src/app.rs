@@ -6,7 +6,7 @@ use std::{
     time::Duration,
 };
 
-use egui::{Align2, FontSelection, Style, TextStyle, Vec2, Widget};
+use egui::{Align2, TextStyle, Vec2, Widget};
 use serde::{Deserialize, Serialize};
 use strum::IntoEnumIterator;
 
@@ -76,8 +76,7 @@ impl Editor {
         let path = path.as_ref();
         let mut file = File::open(path)?;
 
-        file.read_to_string(self.contents.get_contents_mut())
-            .expect("read to contents buffer");
+        file.read_to_string(self.contents.get_contents_mut())?;
 
         self.path = Some(path.to_path_buf());
 
@@ -106,7 +105,7 @@ impl Editor {
     pub fn file_execute(
         &mut self,
         shortcut: FileShortcut,
-        _: &egui::Context,
+        ctx: &egui::Context,
         frame: &mut eframe::Frame,
     ) {
         match shortcut {
@@ -115,7 +114,20 @@ impl Editor {
                 let file = rfd::FileDialog::new().pick_file();
 
                 if let Some(path) = file {
-                    self.open_file(path).unwrap();
+                    if self.open_file(path).is_err() {
+                        egui::Window::new("Invalid File")
+                            .collapsible(false)
+                            .resizable(false)
+                            .anchor(Align2::CENTER_CENTER, Vec2::ZERO)
+                            .show(ctx, |ui| {
+                                ui.vertical(|ui| {
+                                    ui.label(&format!(
+                                        "{} currently only supports UTF-8 encoded files",
+                                        *crate::DEFAULT_NAME
+                                    ));
+                                });
+                            });
+                    }
                 }
             }
             FileShortcut::Save => {
