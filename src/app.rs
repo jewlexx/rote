@@ -164,19 +164,6 @@ impl eframe::App for Editor {
             });
         });
 
-<<<<<<< HEAD
-        let window_size = frame.info().window_info.size;
-
-        egui::Area::new("main_editor").show(ctx, |ui| {
-            ui.set_min_height(100.0);
-            ui.set_max_height(100.0);
-            ui.add_sized(ui.available_size(), egui::TextEdit::multiline(contents));
-||||||| 592c6bf
-        let window_size = frame.info().window_info.size;
-
-        egui::Area::new("main_editor").show(ctx, |ui| {
-            ui.text_edit_multiline(contents);
-=======
         egui::CentralPanel::default().show(ctx, |ui| {
             ui.set_min_height(100.0);
             ui.set_max_height(100.0);
@@ -184,7 +171,6 @@ impl eframe::App for Editor {
                 ui.available_size(),
                 egui::TextEdit::multiline(&mut self.contents),
             );
->>>>>>> 4f226610ef5e2d650b29cab480cd57425dca7165
         });
 
         ctx.input_mut(|state| {
