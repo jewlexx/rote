@@ -7,6 +7,7 @@ use std::{
 };
 
 use egui::{Align2, TextStyle, Vec2, Widget};
+use rfd::FileDialog;
 use serde::{Deserialize, Serialize};
 use strum::IntoEnumIterator;
 
@@ -49,6 +50,19 @@ impl Default for Editor {
 }
 
 impl Editor {
+    pub fn file_dialog() -> FileDialog {
+        const FILTERS: &[(&str, &[&str])] = &[("Regular Text Files", &[".txt"])];
+
+        // TODO: Add a bunch of source file filters
+        let mut builder = FileDialog::new();
+
+        for filter in FILTERS {
+            builder = builder.add_filter(filter.0, filter.1);
+        }
+
+        builder
+    }
+
     pub fn new(ctx: &eframe::CreationContext<'_>) -> Self {
         if let Some(storage) = ctx.storage {
             let mut data: Self = eframe::get_value(storage, eframe::APP_KEY).unwrap_or_default();
@@ -94,7 +108,7 @@ impl Editor {
     }
 
     pub fn save_as(&mut self) {
-        let file = rfd::FileDialog::new().pick_file();
+        let file = Self::file_dialog().save_file();
 
         if let Some(path) = file {
             self.save_file(&path);
@@ -111,7 +125,7 @@ impl Editor {
         match shortcut {
             FileShortcut::Open => {
                 // TODO: Save final directory
-                let file = rfd::FileDialog::new().pick_file();
+                let file = Self::file_dialog().pick_file();
 
                 if let Some(path) = file {
                     if self.open_file(path).is_err() {
@@ -137,6 +151,7 @@ impl Editor {
                     self.save_as();
                 }
             }
+            // TODO: Save As uses open dialogue not save dialogue
             FileShortcut::SaveAs => self.save_as(),
             FileShortcut::Close => self.reset(),
             FileShortcut::Quit => frame.close(),
