@@ -144,7 +144,7 @@ impl eframe::App for Editor {
 
             name
         } else {
-            "Potenad".to_string()
+            crate::DEFAULT_NAME.clone()
         };
 
         let formatted_name = format!("{}{}", name, if self.contents.edited() { "*" } else { "" });
