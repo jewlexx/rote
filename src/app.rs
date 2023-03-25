@@ -136,13 +136,11 @@ impl eframe::App for Editor {
     fn update(&mut self, ctx: &egui::Context, frame: &mut eframe::Frame) {
         let name = if let Some(path) = self.path.as_ref() {
             let stripped_path = path.with_extension("");
-            let name = stripped_path
+            stripped_path
                 .file_name()
                 .unwrap_or_default()
                 .to_string_lossy()
-                .to_string();
-
-            name
+                .to_string()
         } else {
             crate::DEFAULT_NAME.clone()
         };
