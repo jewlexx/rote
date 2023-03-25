@@ -5,6 +5,7 @@ use tracing::Level;
 
 mod app;
 mod buffer;
+mod diff;
 mod shortcuts;
 
 fn main() {

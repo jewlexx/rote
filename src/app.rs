@@ -10,7 +10,10 @@ use egui::{Align2, Vec2, Widget};
 use serde::{Deserialize, Serialize};
 use strum::IntoEnumIterator;
 
-use crate::{buffer::ContentsBuffer, shortcuts::Shortcut};
+use crate::{
+    buffer::ContentsBuffer,
+    shortcuts::{EditShortcut, FileShortcut, Shortcut},
+};
 
 #[derive(Debug, Deserialize, Serialize)]
 #[serde(default)]
@@ -94,9 +97,14 @@ impl Editor {
         }
     }
 
-    pub fn execute(&mut self, shortcut: Shortcut, _: &egui::Context, frame: &mut eframe::Frame) {
+    pub fn file_execute(
+        &mut self,
+        shortcut: FileShortcut,
+        _: &egui::Context,
+        frame: &mut eframe::Frame,
+    ) {
         match shortcut {
-            Shortcut::Open => {
+            FileShortcut::Open => {
                 // TODO: Save final directory
                 let file = rfd::FileDialog::new().pick_file();
 
@@ -104,17 +112,25 @@ impl Editor {
                     self.open_file(path).unwrap();
                 }
             }
-            Shortcut::Save => {
+            FileShortcut::Save => {
                 if let Some(path) = self.path.clone() {
                     self.save_file(&path);
                 } else {
                     self.save_as();
                 }
             }
-            Shortcut::SaveAs => self.save_as(),
-            Shortcut::Close => self.reset(),
-            Shortcut::Quit => frame.close(),
+            FileShortcut::SaveAs => self.save_as(),
+            FileShortcut::Close => self.reset(),
+            FileShortcut::Quit => frame.close(),
         }
+    }
+
+    pub fn edit_execute(
+        &mut self,
+        shortcut: EditShortcut,
+        _: &egui::Context,
+        frame: &mut eframe::Frame,
+    ) {
     }
 }
 
@@ -155,12 +171,20 @@ impl eframe::App for Editor {
             // The top panel is often a good place for a menu bar:
             egui::menu::bar(ui, |ui| {
                 ui.menu_button("File", |ui| {
-                    for shortcut in Shortcut::iter() {
+                    for shortcut in FileShortcut::iter() {
                         if shortcut.into_button(ctx).ui(ui).clicked() {
-                            self.execute(shortcut, ctx, frame);
+                            self.file_execute(shortcut, ctx, frame);
                         }
                     }
                 });
+
+                ui.menu_button("Edit", |ui| {
+                    for shortcut in EditShortcut::iter() {
+                        if shortcut.into_button(ctx).ui(ui).clicked() {
+                            self.edit_execute(shortcut, ctx, frame);
+                        }
+                    }
+                })
             });
         });
 
@@ -174,9 +198,15 @@ impl eframe::App for Editor {
         });
 
         ctx.input_mut(|state| {
-            for shortcut in Shortcut::iter() {
+            for shortcut in FileShortcut::iter() {
                 if state.consume_shortcut(&shortcut.get_details().1) {
-                    self.execute(shortcut, ctx, frame);
+                    self.file_execute(shortcut, ctx, frame);
+                }
+            }
+
+            for shortcut in EditShortcut::iter() {
+                if state.consume_shortcut(&shortcut.get_details().1) {
+                    self.edit_execute(shortcut, ctx, frame);
                 }
             }
         });
@@ -197,7 +227,7 @@ impl eframe::App for Editor {
                             }
 
                             if ui.button("Save").clicked() {
-                                self.execute(Shortcut::Save, ctx, frame);
+                                self.file_execute(FileShortcut::Save, ctx, frame);
                             }
 
                             frame.close();
