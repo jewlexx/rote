@@ -5,6 +5,9 @@ use eframe::IconData;
 use once_cell::sync::Lazy;
 use tracing::Level;
 
+#[macro_use]
+extern crate tracing;
+
 mod app;
 mod buffer;
 mod shortcuts;
@@ -16,11 +19,24 @@ static APP_NAME: Lazy<String> = Lazy::new(|| {
     hecked.to_string()
 });
 
-fn load_icon() -> IconData {
-    IconData {
-        rgba: include_bytes!("../resources/icons/PENCIL.ico").to_vec(),
-        width: 256,
-        height: 256,
+fn load_icon() -> Option<IconData> {
+    match image::load_from_memory(include_bytes!("../resources/icons/PENCIL.png")) {
+        Ok(image) => {
+            info!("Loading icon");
+            let rgba = image.into_rgba8();
+            let (width, height) = rgba.dimensions();
+            let bytes = rgba.into_raw();
+
+            Some(IconData {
+                rgba: bytes,
+                width,
+                height,
+            })
+        }
+        Err(err) => {
+            error!("Invalid image: {}", err);
+            None
+        }
     }
 }
 
@@ -33,7 +49,7 @@ fn main() {
         .init();
 
     let native_options = eframe::NativeOptions {
-        icon_data: Some(load_icon()),
+        icon_data: load_icon(),
         ..Default::default()
     };
 
