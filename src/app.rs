@@ -165,12 +165,12 @@ impl eframe::App for Editor {
         });
 
         egui::CentralPanel::default().show(ctx, |ui| {
-            ui.set_min_height(100.0);
-            ui.set_max_height(100.0);
-            ui.add_sized(
-                ui.available_size(),
-                egui::TextEdit::multiline(&mut self.contents),
-            );
+            egui::ScrollArea::vertical().show(ui, |ui| {
+                let available = ui.available_size();
+                ui.set_min_height(available.y);
+                ui.set_max_height(available.y);
+                ui.add_sized(available, egui::TextEdit::multiline(&mut self.contents));
+            });
         });
 
         ctx.input_mut(|state| {
