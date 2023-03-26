@@ -6,16 +6,38 @@ use std::{
     time::Duration,
 };
 
-use egui::{Align2, Vec2, Widget};
+use egui::{Align2, TextStyle, Vec2, Widget};
+use rfd::FileDialog;
 use serde::{Deserialize, Serialize};
 use strum::IntoEnumIterator;
 
-use crate::{buffer::ContentsBuffer, shortcuts::Shortcut};
+use crate::{
+    buffer::ContentsBuffer,
+    shortcuts::{EditShortcut, FileShortcut, Shortcut, ViewShortcut},
+};
+
+pub fn file_dialog() -> FileDialog {
+    const FILTERS: &[(&str, &[&str])] = &[("All Files", &["*"]), ("Regular Text Files", &["txt"])];
+
+    // TODO: Add a bunch of source file filters
+    let mut builder = FileDialog::new();
+
+    for filter in FILTERS {
+        builder = builder.add_filter(filter.0, filter.1);
+    }
+
+    builder
+}
 
 #[derive(Debug, Deserialize, Serialize)]
 #[serde(default)]
 pub struct Editor {
     path: Option<PathBuf>,
+
+    /// Zoom range as a percentage (*100)
+    ///
+    /// Thus 1.1 would be 110%
+    zoom: f32,
 
     #[serde(skip)]
     trying_to_close: bool,
@@ -32,6 +54,7 @@ impl Default for Editor {
     fn default() -> Self {
         Self {
             path: None,
+            zoom: 1.0,
             trying_to_close: false,
             contents: ContentsBuffer::default(),
             channel: std::sync::mpsc::channel(),
@@ -67,8 +90,7 @@ impl Editor {
         let path = path.as_ref();
         let mut file = File::open(path)?;
 
-        file.read_to_string(self.contents.get_contents_mut())
-            .expect("read to contents buffer");
+        file.read_to_string(self.contents.get_contents_mut())?;
 
         self.path = Some(path.to_path_buf());
 
@@ -86,7 +108,7 @@ impl Editor {
     }
 
     pub fn save_as(&mut self) {
-        let file = rfd::FileDialog::new().pick_file();
+        let file = file_dialog().save_file();
 
         if let Some(path) = file {
             self.save_file(&path);
@@ -94,26 +116,65 @@ impl Editor {
         }
     }
 
-    pub fn execute(&mut self, shortcut: Shortcut, _: &egui::Context, frame: &mut eframe::Frame) {
+    pub fn file_execute(
+        &mut self,
+        shortcut: FileShortcut,
+        ctx: &egui::Context,
+        frame: &mut eframe::Frame,
+    ) {
         match shortcut {
-            Shortcut::Open => {
+            FileShortcut::Open => {
                 // TODO: Save final directory
-                let file = rfd::FileDialog::new().pick_file();
+                let file = file_dialog().pick_file();
 
                 if let Some(path) = file {
-                    self.open_file(path).unwrap();
+                    if self.open_file(path).is_err() {
+                        egui::Window::new("Invalid File")
+                            .collapsible(false)
+                            .resizable(false)
+                            .anchor(Align2::CENTER_CENTER, Vec2::ZERO)
+                            .show(ctx, |ui| {
+                                ui.vertical(|ui| {
+                                    ui.label(&format!(
+                                        "{} currently only supports UTF-8 encoded files",
+                                        *crate::APP_NAME
+                                    ));
+                                });
+                            });
+                    }
                 }
             }
-            Shortcut::Save => {
+            FileShortcut::Save => {
                 if let Some(path) = self.path.clone() {
                     self.save_file(&path);
                 } else {
                     self.save_as();
                 }
             }
-            Shortcut::SaveAs => self.save_as(),
-            Shortcut::Close => self.reset(),
-            Shortcut::Quit => frame.close(),
+            // TODO: Save As uses open dialogue not save dialogue
+            FileShortcut::SaveAs => self.save_as(),
+            FileShortcut::Close => self.reset(),
+            FileShortcut::Quit => frame.close(),
+        }
+    }
+
+    pub fn edit_execute(
+        &mut self,
+        shortcut: EditShortcut,
+        _: &egui::Context,
+        frame: &mut eframe::Frame,
+    ) {
+    }
+
+    pub fn view_execute(
+        &mut self,
+        shortcut: ViewShortcut,
+        _: &egui::Context,
+        frame: &mut eframe::Frame,
+    ) {
+        match shortcut {
+            ViewShortcut::ZoomIn => self.zoom += 0.1,
+            ViewShortcut::ZoomOut => self.zoom -= 0.1,
         }
     }
 }
@@ -134,6 +195,14 @@ impl eframe::App for Editor {
     }
 
     fn update(&mut self, ctx: &egui::Context, frame: &mut eframe::Frame) {
+        let font = {
+            let mut font_id = TextStyle::Body.resolve(&ctx.style());
+            let old_size = font_id.size;
+            font_id.size = old_size * self.zoom;
+
+            font_id
+        };
+
         let name = if let Some(path) = self.path.as_ref() {
             let stripped_path = path.with_extension("");
             stripped_path
@@ -153,10 +222,30 @@ impl eframe::App for Editor {
             // The top panel is often a good place for a menu bar:
             egui::menu::bar(ui, |ui| {
                 ui.menu_button("File", |ui| {
-                    for shortcut in Shortcut::iter() {
+                    for shortcut in FileShortcut::iter() {
                         if shortcut.into_button(ctx).ui(ui).clicked() {
-                            self.execute(shortcut, ctx, frame);
+                            self.file_execute(shortcut, ctx, frame);
                         }
+                    }
+                });
+
+                ui.menu_button("Edit", |ui| {
+                    for shortcut in EditShortcut::iter() {
+                        if shortcut.into_button(ctx).ui(ui).clicked() {
+                            self.edit_execute(shortcut, ctx, frame);
+                        }
+                    }
+                });
+
+                ui.menu_button("View", |ui| {
+                    for shortcut in ViewShortcut::iter() {
+                        if shortcut.into_button(ctx).ui(ui).clicked() {
+                            self.view_execute(shortcut, ctx, frame);
+                        }
+                    }
+
+                    if ui.button("Reset Zoom").clicked() {
+                        self.zoom = 1.0;
                     }
                 });
             });
@@ -167,14 +256,29 @@ impl eframe::App for Editor {
                 let available = ui.available_size();
                 ui.set_min_height(available.y);
                 ui.set_max_height(available.y);
-                ui.add_sized(available, egui::TextEdit::multiline(&mut self.contents));
+                ui.add_sized(
+                    available,
+                    egui::TextEdit::multiline(&mut self.contents).font(font),
+                );
             });
         });
 
         ctx.input_mut(|state| {
-            for shortcut in Shortcut::iter() {
+            for shortcut in FileShortcut::iter() {
                 if state.consume_shortcut(&shortcut.get_details().1) {
-                    self.execute(shortcut, ctx, frame);
+                    self.file_execute(shortcut, ctx, frame);
+                }
+            }
+
+            for shortcut in EditShortcut::iter() {
+                if state.consume_shortcut(&shortcut.get_details().1) {
+                    self.edit_execute(shortcut, ctx, frame);
+                }
+            }
+
+            for shortcut in ViewShortcut::iter() {
+                if state.consume_shortcut(&shortcut.get_details().1) {
+                    self.view_execute(shortcut, ctx, frame);
                 }
             }
         });
@@ -195,7 +299,7 @@ impl eframe::App for Editor {
                             }
 
                             if ui.button("Save").clicked() {
-                                self.execute(Shortcut::Save, ctx, frame);
+                                self.file_execute(FileShortcut::Save, ctx, frame);
                             }
 
                             frame.close();

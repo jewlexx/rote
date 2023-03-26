@@ -10,6 +10,7 @@ extern crate tracing;
 
 mod app;
 mod buffer;
+mod diff;
 mod shortcuts;
 
 static APP_NAME: Lazy<String> = Lazy::new(|| {

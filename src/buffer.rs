@@ -1,5 +1,7 @@
 // TODO: Custom serialize with for contentsbuffer
 
+use crate::diff::DIFF_BUFFER;
+
 #[derive(Debug, Clone)]
 pub struct ContentsBuffer {
     pub contents: String,
@@ -36,6 +38,8 @@ impl ContentsBuffer {
     }
 }
 
+// TODO: Figure out a more memory efficient diffing method that does not require duping the entire file to compare buffers
+
 impl egui::TextBuffer for ContentsBuffer {
     fn is_mutable(&self) -> bool {
         self.contents.is_mutable()
@@ -56,11 +60,17 @@ impl egui::TextBuffer for ContentsBuffer {
     }
 
     fn insert_text(&mut self, text: &str, char_index: usize) -> usize {
+        DIFF_BUFFER.add(text.to_string(), char_index);
+
         self.set_edited(true);
         self.contents.insert_text(text, char_index)
     }
 
     fn delete_char_range(&mut self, char_range: std::ops::Range<usize>) {
+        let deleted_contents = &self.contents[char_range.clone()];
+
+        DIFF_BUFFER.delete(deleted_contents.to_string(), char_range.start);
+
         self.set_edited(true);
         self.contents.delete_char_range(char_range);
     }
