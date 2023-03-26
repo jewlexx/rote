@@ -44,7 +44,18 @@ impl Editor {
         if let Some(storage) = ctx.storage {
             let mut data: Self = eframe::get_value(storage, eframe::APP_KEY).unwrap_or_default();
 
-            if let Some(path) = data.path.clone() {
+            let path = {
+                if let Some(ref path) = crate::ARGS.path {
+                    Some(path)
+                } else if let Some(ref path) = data.path {
+                    Some(path)
+                } else {
+                    None
+                }
+            }
+            .cloned();
+
+            if let Some(path) = path {
                 if data.open_file(path).is_err() {
                     data.path = None;
                 }

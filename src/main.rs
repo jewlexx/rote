@@ -1,6 +1,9 @@
 #![warn(clippy::all, rust_2018_idioms)]
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")] // hide console window on Windows in release
 
+use std::path::PathBuf;
+
+use clap::Parser;
 use eframe::IconData;
 use once_cell::sync::Lazy;
 use tracing::Level;
@@ -39,6 +42,13 @@ fn load_icon() -> Option<IconData> {
         }
     }
 }
+
+#[derive(Debug, Clone, Parser)]
+pub struct Args {
+    pub path: Option<PathBuf>,
+}
+
+pub static ARGS: Lazy<Args> = Lazy::new(Args::parse);
 
 fn main() {
     use tracing_subscriber::fmt::format::FmtSpan;
