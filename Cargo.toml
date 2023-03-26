@@ -19,6 +19,7 @@ strum = { version = "0.24.1", features = ["derive"] }
 toml = "0.7.3"
 tracing = "0.1.37"
 tracing-subscriber = "0.3.16"
+deepsize = "0.2.0"
 
 [target.'cfg(windows)'.build-dependencies]
 windres = "0.2"

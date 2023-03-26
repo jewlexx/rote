@@ -51,7 +51,8 @@ impl Default for Editor {
 
 impl Editor {
     pub fn file_dialog() -> FileDialog {
-        const FILTERS: &[(&str, &[&str])] = &[("Regular Text Files", &[".txt"])];
+        const FILTERS: &[(&str, &[&str])] =
+            &[("All Files", &["*"]), ("Regular Text Files", &["txt"])];
 
         // TODO: Add a bunch of source file filters
         let mut builder = FileDialog::new();

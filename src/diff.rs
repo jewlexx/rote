@@ -1,6 +1,7 @@
+use deepsize::DeepSizeOf;
 use parking_lot::Mutex;
 
-#[derive(Debug)]
+#[derive(Debug, Clone, DeepSizeOf)]
 pub enum Diff {
     Add(String, usize),
     Remove(String, usize),
@@ -48,6 +49,12 @@ impl DiffBuffer {
             self.size()
         );
         self.diffs.lock().push(diff);
+        println!("New Size: {}", self.count_size());
+    }
+
+    pub fn count_size(&self) -> usize {
+        let diffs = self.diffs.lock().clone();
+        diffs.deep_size_of()
     }
 }
 
