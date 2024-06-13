@@ -1,6 +1,9 @@
 #![warn(clippy::all, rust_2018_idioms)]
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")] // hide console window on Windows in release
 
+use std::path::PathBuf;
+
+use clap::Parser;
 use eframe::IconData;
 use once_cell::sync::Lazy;
 use tracing::Level;
@@ -40,6 +43,11 @@ fn load_icon() -> Option<IconData> {
     }
 }
 
+#[derive(Debug, Clone, Parser)]
+pub struct Args {
+    pub path: Option<PathBuf>,
+}
+
 fn main() {
     use tracing_subscriber::fmt::format::FmtSpan;
 
@@ -47,6 +55,8 @@ fn main() {
         .with_span_events(FmtSpan::CLOSE | FmtSpan::NEW)
         .with_max_level(Level::DEBUG)
         .init();
+
+    let args = Args::parse();
 
     let native_options = eframe::NativeOptions {
         icon_data: load_icon(),
@@ -56,7 +66,7 @@ fn main() {
     eframe::run_native(
         APP_NAME.as_str(),
         native_options,
-        Box::new(|ctx| Box::new(app::Editor::new(ctx))),
+        Box::new(move |ctx| Box::new(app::Editor::new(ctx, &args))),
     )
     .unwrap();
 }

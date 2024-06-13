@@ -40,11 +40,22 @@ impl Default for Editor {
 }
 
 impl Editor {
-    pub fn new(ctx: &eframe::CreationContext<'_>) -> Self {
+    pub fn new(ctx: &eframe::CreationContext<'_>, args: &super::Args) -> Self {
         if let Some(storage) = ctx.storage {
             let mut data: Self = eframe::get_value(storage, eframe::APP_KEY).unwrap_or_default();
 
-            if let Some(path) = data.path.clone() {
+            let path = {
+                if let Some(ref path) = args.path {
+                    Some(path)
+                } else if let Some(ref path) = data.path {
+                    Some(path)
+                } else {
+                    None
+                }
+            }
+            .cloned();
+
+            if let Some(path) = path {
                 if data.open_file(path).is_err() {
                     data.path = None;
                 }
@@ -150,7 +161,6 @@ impl eframe::App for Editor {
         frame.set_window_title(&formatted_name);
 
         egui::TopBottomPanel::top("top_panel").show(ctx, |ui| {
-            // The top panel is often a good place for a menu bar:
             egui::menu::bar(ui, |ui| {
                 ui.menu_button("File", |ui| {
                     for shortcut in Shortcut::iter() {
@@ -192,13 +202,17 @@ impl eframe::App for Editor {
                         ui.horizontal(|ui| {
                             if ui.button("Don't Save").clicked() {
                                 self.contents.set_edited(false);
+                                frame.close();
                             }
 
                             if ui.button("Save").clicked() {
                                 self.execute(Shortcut::Save, ctx, frame);
-                            }
+                                frame.close();
+                            };
 
-                            frame.close();
+                            if ui.button("Cancel").clicked() {
+                                self.trying_to_close = false;
+                            }
                         });
                     });
                 });
