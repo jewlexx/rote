@@ -161,7 +161,6 @@ impl eframe::App for Editor {
         frame.set_window_title(&formatted_name);
 
         egui::TopBottomPanel::top("top_panel").show(ctx, |ui| {
-            // The top panel is often a good place for a menu bar:
             egui::menu::bar(ui, |ui| {
                 ui.menu_button("File", |ui| {
                     for shortcut in Shortcut::iter() {
@@ -203,13 +202,17 @@ impl eframe::App for Editor {
                         ui.horizontal(|ui| {
                             if ui.button("Don't Save").clicked() {
                                 self.contents.set_edited(false);
+                                frame.close();
                             }
 
                             if ui.button("Save").clicked() {
                                 self.execute(Shortcut::Save, ctx, frame);
-                            }
+                                frame.close();
+                            };
 
-                            frame.close();
+                            if ui.button("Cancel").clicked() {
+                                self.trying_to_close = false;
+                            }
                         });
                     });
                 });
