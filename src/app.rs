@@ -40,12 +40,12 @@ impl Default for Editor {
 }
 
 impl Editor {
-    pub fn new(ctx: &eframe::CreationContext<'_>) -> Self {
+    pub fn new(ctx: &eframe::CreationContext<'_>, args: &super::Args) -> Self {
         if let Some(storage) = ctx.storage {
             let mut data: Self = eframe::get_value(storage, eframe::APP_KEY).unwrap_or_default();
 
             let path = {
-                if let Some(ref path) = crate::ARGS.path {
+                if let Some(ref path) = args.path {
                     Some(path)
                 } else if let Some(ref path) = data.path {
                     Some(path)

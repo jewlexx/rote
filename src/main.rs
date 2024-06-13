@@ -48,8 +48,6 @@ pub struct Args {
     pub path: Option<PathBuf>,
 }
 
-pub static ARGS: Lazy<Args> = Lazy::new(Args::parse);
-
 fn main() {
     use tracing_subscriber::fmt::format::FmtSpan;
 
@@ -57,6 +55,8 @@ fn main() {
         .with_span_events(FmtSpan::CLOSE | FmtSpan::NEW)
         .with_max_level(Level::DEBUG)
         .init();
+
+    let args = Args::parse();
 
     let native_options = eframe::NativeOptions {
         icon_data: load_icon(),
@@ -66,7 +66,7 @@ fn main() {
     eframe::run_native(
         APP_NAME.as_str(),
         native_options,
-        Box::new(|ctx| Box::new(app::Editor::new(ctx))),
+        Box::new(move |ctx| Box::new(app::Editor::new(ctx, &args))),
     )
     .unwrap();
 }
