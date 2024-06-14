@@ -1,10 +1,10 @@
 #![warn(clippy::all, rust_2018_idioms)]
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")] // hide console window on Windows in release
 
-use std::path::PathBuf;
+use std::{path::PathBuf, sync::Arc};
 
 use clap::Parser;
-use eframe::IconData;
+use egui::IconData;
 use once_cell::sync::Lazy;
 use tracing::Level;
 
@@ -59,7 +59,10 @@ fn main() {
     let args = Args::parse();
 
     let native_options = eframe::NativeOptions {
-        icon_data: load_icon(),
+        viewport: egui::ViewportBuilder {
+            icon: load_icon().map(Arc::new),
+            ..Default::default()
+        },
         ..Default::default()
     };
 

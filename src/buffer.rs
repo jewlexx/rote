@@ -65,8 +65,8 @@ impl egui::TextBuffer for ContentsBuffer {
         self.contents.delete_char_range(char_range);
     }
 
-    fn replace(&mut self, text: &str) {
+    fn replace_with(&mut self, text: &str) {
         self.set_edited(true);
-        self.contents.replace(text);
+        self.contents.replace_with(text);
     }
 }

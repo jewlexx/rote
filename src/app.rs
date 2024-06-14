@@ -6,7 +6,7 @@ use std::{
     time::Duration,
 };
 
-use egui::{Align2, Vec2, Widget};
+use egui::{Align2, Vec2, ViewportCommand, Widget};
 use serde::{Deserialize, Serialize};
 use strum::IntoEnumIterator;
 
@@ -16,6 +16,8 @@ use crate::{buffer::ContentsBuffer, shortcuts::Shortcut};
 #[serde(default)]
 pub struct Editor {
     path: Option<PathBuf>,
+
+    last_selection_dir: Option<PathBuf>,
 
     #[serde(skip)]
     trying_to_close: bool,
@@ -32,6 +34,7 @@ impl Default for Editor {
     fn default() -> Self {
         Self {
             path: None,
+            last_selection_dir: None,
             trying_to_close: false,
             contents: ContentsBuffer::default(),
             channel: std::sync::mpsc::channel(),
@@ -72,6 +75,21 @@ impl Editor {
         self.path = None;
     }
 
+    pub fn pick_file(&mut self, base_path: Option<impl AsRef<Path>>) {
+        let dialog = if let Some(path) = base_path {
+            rfd::FileDialog::new().set_directory(path)
+        } else {
+            rfd::FileDialog::new()
+        };
+
+        // TODO: Save final directory
+        let file = dialog.pick_file();
+
+        if let Some(path) = file {
+            self.open_file(path).unwrap();
+        }
+    }
+
     pub fn open_file(&mut self, path: impl AsRef<Path>) -> std::io::Result<()> {
         use std::{fs::File, io::Read};
 
@@ -96,6 +114,14 @@ impl Editor {
         self.contents.set_edited(false);
     }
 
+    pub fn save(&mut self) {
+        if let Some(path) = self.path.clone() {
+            self.save_file(&path);
+        } else {
+            self.save_as();
+        }
+    }
+
     pub fn save_as(&mut self) {
         let file = rfd::FileDialog::new().pick_file();
 
@@ -105,34 +131,28 @@ impl Editor {
         }
     }
 
-    pub fn execute(&mut self, shortcut: Shortcut, _: &egui::Context, frame: &mut eframe::Frame) {
+    pub fn execute(&mut self, shortcut: Shortcut, ctx: &egui::Context) {
         match shortcut {
-            Shortcut::Open => {
-                // TODO: Save final directory
-                let file = rfd::FileDialog::new().pick_file();
-
-                if let Some(path) = file {
-                    self.open_file(path).unwrap();
-                }
-            }
-            Shortcut::Save => {
-                if let Some(path) = self.path.clone() {
-                    self.save_file(&path);
-                } else {
-                    self.save_as();
-                }
-            }
+            Shortcut::Open => self.pick_file(self.last_selection_dir.clone()),
+            Shortcut::Save => self.save(),
             Shortcut::SaveAs => self.save_as(),
             Shortcut::Close => self.reset(),
-            Shortcut::Quit => frame.close(),
+            Shortcut::Quit => ctx.send_viewport_cmd(ViewportCommand::Close),
         }
+    }
+
+    fn close(ctx: &egui::Context) {
+        ctx.send_viewport_cmd(ViewportCommand::Close);
+    }
+
+    fn cancel_close(ctx: &egui::Context) {
+        ctx.send_viewport_cmd(ViewportCommand::CancelClose);
     }
 }
 
 impl eframe::App for Editor {
-    fn on_close_event(&mut self) -> bool {
+    fn on_exit(&mut self, _gl: Option<&eframe::glow::Context>) {
         self.trying_to_close = true;
-        !self.contents.edited()
     }
 
     fn save(&mut self, storage: &mut dyn eframe::Storage) {
@@ -144,7 +164,7 @@ impl eframe::App for Editor {
         Duration::from_secs(60)
     }
 
-    fn update(&mut self, ctx: &egui::Context, frame: &mut eframe::Frame) {
+    fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
         let name = if let Some(path) = self.path.as_ref() {
             let stripped_path = path.with_extension("");
             stripped_path
@@ -157,15 +177,14 @@ impl eframe::App for Editor {
         };
 
         let formatted_name = format!("{}{}", name, if self.contents.edited() { "*" } else { "" });
-
-        frame.set_window_title(&formatted_name);
+        ctx.send_viewport_cmd(ViewportCommand::Title(formatted_name));
 
         egui::TopBottomPanel::top("top_panel").show(ctx, |ui| {
             egui::menu::bar(ui, |ui| {
                 ui.menu_button("File", |ui| {
                     for shortcut in Shortcut::iter() {
                         if shortcut.into_button(ctx).ui(ui).clicked() {
-                            self.execute(shortcut, ctx, frame);
+                            self.execute(shortcut, ctx);
                         }
                     }
                 });
@@ -184,7 +203,7 @@ impl eframe::App for Editor {
         ctx.input_mut(|state| {
             for shortcut in Shortcut::iter() {
                 if state.consume_shortcut(&shortcut.get_details().1) {
-                    self.execute(shortcut, ctx, frame);
+                    self.execute(shortcut, ctx);
                 }
             }
         });
@@ -202,12 +221,12 @@ impl eframe::App for Editor {
                         ui.horizontal(|ui| {
                             if ui.button("Don't Save").clicked() {
                                 self.contents.set_edited(false);
-                                frame.close();
+                                Self::close(ctx);
                             }
 
                             if ui.button("Save").clicked() {
-                                self.execute(Shortcut::Save, ctx, frame);
-                                frame.close();
+                                self.execute(Shortcut::Save, ctx);
+                                Self::close(ctx);
                             };
 
                             if ui.button("Cancel").clicked() {
@@ -216,6 +235,14 @@ impl eframe::App for Editor {
                         });
                     });
                 });
+        }
+
+        if ctx.input(|i| i.viewport().close_requested()) {
+            // Do not cancel close if we are already trying to close
+            if !self.trying_to_close {
+                self.trying_to_close = true;
+                Self::cancel_close(ctx);
+            }
         }
     }
 }

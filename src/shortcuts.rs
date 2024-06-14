@@ -24,7 +24,7 @@ impl Shortcut {
         }
     }
 
-    pub fn into_button(self, ctx: &Context) -> Button {
+    pub fn into_button(self, ctx: &Context) -> Button<'_> {
         let (title, shortcut) = self.get_details();
         Button::new(title).shortcut_text(ctx.format_shortcut(&shortcut))
     }
