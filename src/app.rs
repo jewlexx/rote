@@ -141,6 +141,10 @@ impl Editor {
         }
     }
 
+    pub fn dirty(&self) -> bool {
+        self.contents.edited()
+    }
+
     fn close(ctx: &egui::Context) {
         ctx.send_viewport_cmd(ViewportCommand::Close);
     }
@@ -219,15 +223,15 @@ impl eframe::App for Editor {
                         ui.label("You will lose all changes.");
 
                         ui.horizontal(|ui| {
-                            if ui.button("Don't Save").clicked() {
-                                self.contents.set_edited(false);
-                                Self::close(ctx);
-                            }
-
                             if ui.button("Save").clicked() {
                                 self.execute(Shortcut::Save, ctx);
                                 Self::close(ctx);
                             };
+
+                            if ui.button("Don't Save").clicked() {
+                                self.contents.set_edited(false);
+                                Self::close(ctx);
+                            }
 
                             if ui.button("Cancel").clicked() {
                                 self.trying_to_close = false;
@@ -238,8 +242,8 @@ impl eframe::App for Editor {
         }
 
         if ctx.input(|i| i.viewport().close_requested()) {
-            // Do not cancel close if we are already trying to close
-            if !self.trying_to_close {
+            // Do not cancel close if we are already trying to close, or if there aren't unsaved changes
+            if !self.trying_to_close && self.dirty() {
                 self.trying_to_close = true;
                 Self::cancel_close(ctx);
             }
